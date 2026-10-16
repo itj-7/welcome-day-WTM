@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arcane Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --wall:#0b0f14; --panel:#0a1016; --ink:#e9f2ef; --mute:#8aa0a6;
+  --teal:#2fe6d6; --pink:#ff3d8b; --gold:#d6b25e; --green:#7dff5a; --steel:#6b7c86;
+  --ok:#3be39a; --bad:#ff3d8b;
+  --chamf:polygon(20px 0,100% 0,100% calc(100% - 20px),calc(100% - 20px) 100%,0 100%,0 20px);
+  --hexbtn:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);
+  box-sizing:border-box; color-scheme:dark;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wall:#0b0f14}}
+:root[data-theme="dark"]{--wall:#0b0f14}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background-color:var(--wall);
+  background-image:
+    radial-gradient(60% 45% at 8% 0%,rgba(255,61,139,.28),transparent 65%),
+    radial-gradient(60% 45% at 95% 100%,rgba(47,230,214,.25),transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='rgba(47,230,214,.09)' stroke-width='2'/%3E%3Cpath d='M28 0L28 34L0 50L0 84L28 100L56 84L56 50L28 34' fill='none' stroke='rgba(47,230,214,.09)' stroke-width='2'/%3E%3C/svg%3E");
+  color:var(--ink); font-family:'Rajdhani',system-ui,sans-serif; font-size:19px; line-height:1.4;
+  display:flex; align-items:center; justify-content:center; padding:22px; min-height:100vh; overflow-x:hidden;
+}
+body::before{ /* concrete grain */
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.14'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+}
+#bg{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.tag{position:absolute;font-family:'Permanent Marker',cursive;white-space:nowrap;opacity:.8;letter-spacing:.03em}
+.drip{position:absolute;top:0;width:7px;border-radius:0 0 6px 6px;opacity:.85}
+.doodle{position:absolute}
+.doodle svg{width:100%;height:100%}
+.bgex{position:absolute;opacity:.6;filter:brightness(.7) saturate(1.2) drop-shadow(0 0 12px #1b3fae);animation:bob 7s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-16px) rotate(4deg)}}
+
+.card{position:relative;z-index:1;width:100%;max-width:580px;filter:drop-shadow(0 0 24px rgba(255,61,139,.3)) drop-shadow(0 0 14px rgba(47,230,214,.25))}
+.card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--teal),var(--pink));clip-path:var(--chamf);
+  -webkit-mask:linear-gradient(#000,#000),linear-gradient(90deg,transparent 0 14%,#000 14% 16%,transparent 16% 38%,#000 38% 41%,transparent 41% 66%,#000 66% 68%,transparent 68% 86%,#000 86% 88%,transparent 88%) top/100% 7px no-repeat;
+  -webkit-mask-composite:source-out;
+  mask:linear-gradient(#000,#000),linear-gradient(90deg,transparent 0 14%,#000 14% 16%,transparent 16% 38%,#000 38% 41%,transparent 41% 66%,#000 66% 68%,transparent 68% 86%,#000 86% 88%,transparent 88%) top/100% 7px no-repeat;
+  mask-composite:subtract}
+.in{position:relative;margin:2px;padding:28px 24px 26px;background:linear-gradient(180deg,#0d151c,var(--panel));clip-path:var(--chamf)}
+.in::after{content:"";position:absolute;right:14px;top:14px;width:46px;height:52px;opacity:.55;background:var(--steel);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);-webkit-mask:radial-gradient(circle at 50% 50%,transparent 9px,#000 10px);mask:radial-gradient(circle at 50% 50%,transparent 9px,#000 10px)}
+
+h1,h2,.score{font-family:'Permanent Marker',cursive;font-weight:400;margin:0}
+h1{font-size:clamp(44px,12vw,70px);line-height:1;text-align:center;color:var(--pink);transform:rotate(-3deg);
+  text-shadow:4px 4px 0 var(--teal),0 0 26px rgba(255,61,139,.55)}
+.sub{text-align:center;color:var(--mute);margin:14px 0 18px}
+.art{display:none}
+.art svg{width:140px;height:140px;filter:drop-shadow(0 0 14px var(--glow,#2fe6d6))}
+.core{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.65}}
+h2{font-size:clamp(21px,5.4vw,28px);line-height:1.25;text-align:center;margin:0 0 18px;color:var(--ink)}
+.meta{display:flex;justify-content:space-between;color:var(--mute);margin-bottom:8px}
+.pips{display:flex;gap:6px;justify-content:center;margin-bottom:12px;filter:drop-shadow(0 0 6px rgba(47,230,214,.35))}
+.pip{width:22px;height:24px;background:#25323c;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);transition:background .25s}
+.pip.cur{background:var(--teal)}.pip.ok{background:var(--ok)}.pip.bad{background:var(--bad)}
+.opts{display:grid;gap:10px}
+button{font:inherit;color:var(--ink);cursor:pointer;border:0}
+.opt{--edge:#41525c;--fill:#101a22;position:relative;background:var(--edge);padding:0;clip-path:var(--hexbtn);text-align:left;transition:transform .15s}
+.opt span{display:block;margin:2px;padding:12px 30px;background:var(--fill);clip-path:var(--hexbtn);transition:background .15s}
+.opt:hover:not([disabled]){--edge:var(--teal);--fill:#10262b;transform:translateX(5px)}
+.opt:focus-visible,.go:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.opt.ok{--edge:var(--ok);--fill:#0f2e23}
+.opt.bad{--edge:var(--bad);--fill:#33121f;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.go{display:block;margin:22px auto 0;padding:0;background:linear-gradient(135deg,var(--teal),var(--pink));clip-path:var(--hexbtn);transition:transform .2s,filter .2s}
+.go span{display:block;margin:2px;padding:12px 40px;background:#0c141a;clip-path:var(--hexbtn);font-family:'Permanent Marker',cursive;font-size:21px;letter-spacing:.04em}
+.go:hover{transform:translateY(-2px) rotate(-1deg);filter:drop-shadow(0 0 12px var(--pink))}
+.hidden{display:none}
+.score{font-size:66px;text-align:center;color:var(--teal);text-shadow:3px 3px 0 var(--pink);transform:rotate(-2deg);margin:6px 0}
+.rank{font-family:'Permanent Marker',cursive;text-align:center;font-size:24px;color:var(--gold)}
+@media (prefers-reduced-motion:reduce){.core,.bgex{animation:none}.opt,.go,.pip{transition:none}.opt.bad{animation:none}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:5;overflow:hidden}
+.fl{position:absolute;inset:0;animation:fl .6s ease-out forwards}
+@keyframes fl{0%{opacity:1}100%{opacity:0}}
+.rk{position:absolute;left:0;width:180px;height:8px;margin-top:-4px;border-radius:8px;background:linear-gradient(90deg,transparent,var(--pink) 60%,#fff);box-shadow:0 0 16px var(--pink);transform:translateX(-200px);animation:rk .28s cubic-bezier(.5,0,1,1) forwards}
+@keyframes rk{to{transform:translateX(var(--x))}}
+.bm{position:absolute;width:280px;height:280px;margin:-140px 0 0 -140px;animation:bm .6s ease-out forwards}
+.bm svg{width:100%;height:100%}
+@keyframes bm{0%{transform:scale(.1) rotate(0);opacity:1}100%{transform:scale(1.15) rotate(18deg);opacity:0}}
+.bt{position:absolute;font-family:'Permanent Marker',cursive;font-size:56px;color:#fff;white-space:nowrap;text-shadow:4px 4px 0 var(--pink),-3px -3px 0 var(--teal);transform:translate(-50%,-50%) rotate(-8deg);animation:bt .8s ease-out forwards}
+@keyframes bt{0%{scale:.2;opacity:0}20%{scale:1.25;opacity:1}100%{scale:1;opacity:0}}
+.sh{position:absolute;width:12px;height:14px;margin:-7px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);animation:sh .7s ease-out forwards}
+@keyframes sh{to{transform:translate(var(--dx),var(--dy)) rotate(240deg);opacity:0}}
+.kick{animation:kick .35s}
+.bt.big{font-size:clamp(52px,16vw,120px);animation-duration:1.5s}
+@keyframes kick{20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,2px)}}
+@media (prefers-reduced-motion:reduce){.rk,.bm,.bt,.sh{display:none}.kick{animation:none}}
+/* phone: keep the graffiti wall visible */
+@media (max-width:640px){
+  body{padding:84px 14px 110px;align-items:flex-start}
+  .in{background:linear-gradient(180deg,rgba(13,21,28,.82),rgba(10,16,22,.88))}
+  #bg .tag{opacity:.95}
+  #bg .tag:nth-child(1){font-size:68px!important;left:2%!important;top:2%!important}
+  #bg .tag:nth-child(2){font-size:26px!important;top:7%!important}
+  #bg .tag:nth-child(3){font-size:64px!important;bottom:3%!important}
+  #bg .tag:nth-child(4){font-size:28px!important;bottom:12%!important}
+  .doodle{opacity:.7!important}
+  .bgex{opacity:.5}
+}
+</style>
+</head>
+<body>
+<div id="bg" aria-hidden="true">
+  <span class="tag" style="left:3%;top:7%;font-size:clamp(46px,10vw,120px);color:var(--pink);transform:rotate(-11deg);text-shadow:3px 3px 0 rgba(47,230,214,.6)">JINX</span>
+  <span class="tag" style="right:3%;top:12%;font-size:clamp(20px,3.5vw,38px);color:var(--teal);transform:rotate(7deg)">catch me!</span>
+  <span class="tag" style="right:4%;bottom:6%;font-size:clamp(44px,9vw,104px);color:var(--teal);transform:rotate(8deg);text-shadow:3px 3px 0 rgba(255,61,139,.6)">BOOM!</span>
+  <span class="tag" style="left:4%;bottom:9%;font-size:clamp(20px,4vw,42px);color:var(--pink);transform:rotate(-6deg)">ha ha ha ha</span>
+</div>
+<div id="fx" aria-hidden="true"></div>
+<main class="card"><div class="in">
+  <section id="start">
+    <h1>ARCANE QUIZ</h1>
+    <p class="sub">Piltover shines above. Zaun burns below. How well do you know both?</p>
+    <div class="art" id="startArt"></div>
+    <button class="go" id="startBtn"><span>Start</span></button>
+  </section>
+  <section id="game" class="hidden">
+    <div class="meta"><span id="count"></span><span id="pts"></span></div>
+    <div class="pips" id="pips"></div>
+    <div class="art" id="art"></div>
+    <h2 id="q"></h2>
+    <div class="opts" id="opts"></div>
+    <button class="go hidden" id="next"><span id="nextTxt">Next</span></button>
+  </section>
+  <section id="end" class="hidden">
+    <h1>DONE!</h1>
+    <div class="score" id="final"></div>
+    <div class="rank" id="rank"></div>
+    <div class="art" id="endArt"></div>
+    <p class="sub" id="msg"></p>
+    <button class="go" id="again"><span>Play again</span></button>
+  </section>
+</div></main>
+<script>
+const C={teal:'#2fe6d6',pink:'#ff3d8b',gold:'#d6b25e',green:'#7dff5a'};
+let uid=0;
+const G=(c,b)=>`<svg viewBox="0 0 100 100" fill="none" stroke="${c}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${b}</svg>`;
+// Hextech core: steel frame + glowing crystal
+const hexcore=c=>{const id='g'+(uid++);return `<svg viewBox="0 0 100 100"><defs><radialGradient id="${id}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity=".15"/></radialGradient></defs>
+<polygon points="50,3 92,27 92,73 50,97 8,73 8,27" fill="#111a22" stroke="#7a8c96" stroke-width="3"/>
+<polygon class="core" points="50,17 80,34 80,66 50,83 20,66 20,34" fill="url(#${id})" stroke="${c}" stroke-width="2"/>
+<path d="M50 17V83M20 34L80 66M80 34L20 66" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/>
+<g fill="#7a8c96"><circle cx="50" cy="3" r="3"/><circle cx="92" cy="27" r="3"/><circle cx="92" cy="73" r="3"/><circle cx="50" cy="97" r="3"/><circle cx="8" cy="73" r="3"/><circle cx="8" cy="27" r="3"/></g></svg>`};
+const hexcluster=c=>{const id='g'+(uid++);const h=(x,y,r)=>`<polygon points="${x},${y-r} ${x+r*.87},${y-r/2} ${x+r*.87},${y+r/2} ${x},${y+r} ${x-r*.87},${y+r/2} ${x-r*.87},${y-r/2}" fill="url(#${id})" stroke="${c}" stroke-width="2"/>`;
+ return `<svg viewBox="0 0 100 100"><defs><radialGradient id="${id}"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity=".2"/></radialGradient></defs><g class="core">${h(50,30,24)}${h(27,68,22)}${h(73,68,22)}</g></svg>`};
+// Jinx graffiti
+const jinx=c=>G(c,`<path d="M22 52Q18 20 50 18Q84 20 82 54Q80 84 48 84Q24 82 22 52Z"/><path d="M34 38L44 48M44 38L34 48"/><circle cx="65" cy="44" r="6"/><circle cx="65" cy="44" r="1.5"/><path d="M32 62Q50 84 72 60"/><path d="M42 68V74M52 70V76M62 66V72"/><path d="M20 40Q2 62 14 94"/><path d="M82 40Q98 62 88 94"/>`);
+const bomb=c=>G(c,`<circle cx="44" cy="62" r="28"/><path d="M34 56L40 62M40 56L34 62"/><path d="M50 56L56 62M56 56L50 62"/><path d="M34 74Q44 82 56 74"/><path d="M62 38Q74 22 82 26"/><path d="M82 26L78 14M82 26L94 22M82 26L90 36"/>`);
+const bolt=c=>G(c,`<polygon points="58,6 24,56 46,56 38,94 78,40 54,40"/>`);
+const heart=c=>G(c,`<path d="M50 86C10 58 14 22 36 24C46 25 50 34 50 34C50 34 54 25 64 24C86 22 90 58 50 86Z"/><path d="M52 34L44 50L56 58L46 76"/>`);
+const rocket=c=>G(c,`<path d="M10 62L66 40L88 44L88 56L66 60L20 76Z"/><circle cx="18" cy="72" r="8"/><path d="M88 50H98"/><path d="M40 52L36 36L46 32"/>`);
+// quiz pictures
+const gauntlet=c=>G(c,`<path d="M26 74V42Q26 32 36 32H70Q80 32 80 42V74"/><path d="M44 32V52M58 32V52"/><path d="M26 52Q14 52 17 63Q20 70 28 67"/><path d="M30 74H76V90H30Z"/><polygon points="53,40 59,43.5 59,50.5 53,54 47,50.5 47,43.5"/><path d="M40 82H66"/>`);
+const fishbones=c=>G(c,`<path d="M8 60L70 40L88 46V58L70 62L16 78Z"/><path d="M40 52L46 28L58 46"/><path d="M88 46L97 49L88 52L97 55L88 58"/><circle cx="76" cy="50" r="2.5"/><path d="M28 72V90H40V68"/>`);
+const vial=c=>G(c,`<path d="M30 64H70L76 76Q80 90 64 90H36Q20 90 24 76Z" fill="${c}" fill-opacity=".3"/><path d="M40 10H60M44 10V32L24 76Q20 90 36 90H64Q80 90 76 76L56 32V10"/><circle cx="44" cy="78" r="3"/><circle cx="58" cy="72" r="2"/>`);
+const badge=c=>G(c,`<path d="M50 8L84 20V50Q84 76 50 92Q16 76 16 50V20Z"/><polygon points="50,28 55,42 70,42 58,51 62,66 50,57 38,66 42,51 30,42 45,42"/>`);
+const dial=c=>G(c,`<circle cx="50" cy="50" r="38"/><circle cx="50" cy="50" r="5"/><path d="M50 50V24M50 50L70 58"/><path d="M50 4V12M50 88V96M4 50H12M88 50H96"/>`);
+// catchier Arcane emblems
+const tag=c=>G(c,`<path d="M18 50Q16 18 50 16Q86 18 84 52Q82 86 48 86Q20 84 18 50Z" fill="${c}" fill-opacity=".15"/><circle cx="36" cy="42" r="9"/><circle cx="36" cy="42" r="3" fill="${c}"/><circle cx="66" cy="44" r="9"/><path d="M62 40L70 48M70 40L62 48"/><path d="M28 62Q50 88 76 60"/><path d="M38 71V77M48 74V80M58 73V79M68 68V74"/><path d="M16 36Q4 62 12 94"/><path d="M86 38Q98 62 90 94"/>`);
+const chomper=c=>G(c,`<circle cx="46" cy="60" r="28" fill="${c}" fill-opacity=".18"/><circle cx="36" cy="52" r="4"/><circle cx="56" cy="52" r="4"/><path d="M24 64L30 74L36 64L42 74L48 64L54 74L60 64L66 72"/><path d="M62 36Q74 22 80 26"/><path d="M80 26L77 12M80 26L92 22M80 26L90 38M80 26L70 18"/>`);
+const hexgate=c=>G(c,`<polygon points="50,6 90,28 90,72 50,94 10,72 10,28"/><polygon points="50,22 76,36 76,64 50,78 24,64 24,36"/><circle cx="50" cy="50" r="9" fill="${c}" fill-opacity=".55"/><path d="M50 6V22M90 28L76 36M90 72L76 64M50 94V78M10 72L24 64M10 28L24 36"/>`);
+const zaun=c=>G(c,`<path d="M8 90V62H22V46H32V62H44V36H54V62H66V52H76V62H92V90Z" fill="${c}" fill-opacity=".18"/><path d="M27 46V32M49 36V20"/><path d="M24 26Q30 18 27 11M45 16Q54 10 50 3"/><path d="M8 76H92"/><circle cx="18" cy="84" r="2"/><circle cx="38" cy="84" r="2"/><circle cx="58" cy="84" r="2"/><circle cx="80" cy="84" r="2"/>`);
+const piltover=c=>G(c,`<path d="M50 4V28M43 28H57L62 90H38Z" fill="${c}" fill-opacity=".15"/><circle cx="50" cy="46" r="9"/><path d="M30 90V62L40 54M70 90V62L60 54"/><path d="M14 90V72M86 90V72"/><path d="M6 90H94"/>`);
+const ICONS=[hexcore,tag,chomper,hexgate,fishbones,gauntlet,vial,zaun,piltover];
+document.getElementById('fx').addEventListener('animationend',e=>e.target.remove());
+// finale: a full barrage when you finish the whole game
+function finale(n){
+  const W=innerWidth,H=innerHeight;
+  for(let k=0;k<n;k++){setTimeout(()=>{
+    const x=W*(.15+Math.random()*.7),y=H*(.12+Math.random()*.76);
+    boom({getBoundingClientRect:()=>({left:x,top:y,width:0,height:0})});
+  },k*320)}
+  setTimeout(()=>{
+    const fx=document.getElementById('fx');
+    const fl=document.createElement('div');fl.className='fl';fl.style.background='radial-gradient(circle,#fff 0,rgba(255,61,139,.75) 40%,rgba(47,230,214,.35) 80%)';fl.style.animationDuration='1s';fx.appendChild(fl);
+    const t=document.createElement('span');t.className='bt big';t.textContent='KABOOM!';t.style.left='50%';t.style.top='38%';fx.appendChild(t);
+  },n*320+250);
+}
+// Jinx rocket hit on a correct answer
+function boom(btn){
+  const fx=$('fx'),r=btn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const rk=document.createElement('div');rk.className='rk';rk.style.top=cy+'px';rk.style.setProperty('--x',(cx-180)+'px');fx.appendChild(rk);
+  setTimeout(()=>{
+    rk.remove();
+    const fl=document.createElement('div');fl.className='fl';
+    fl.style.background=`radial-gradient(circle at ${cx}px ${cy}px,#fff 0,rgba(255,61,139,.7) 18%,rgba(47,230,214,.25) 45%,transparent 70%)`;fx.appendChild(fl);
+    const pts=[];for(let k=0;k<24;k++){const a=k*Math.PI/12,rad=k%2?48:100;pts.push((100+rad*Math.cos(a)).toFixed(1)+','+(100+rad*Math.sin(a)).toFixed(1))}
+    const bm=document.createElement('div');bm.className='bm';bm.style.left=cx+'px';bm.style.top=cy+'px';
+    bm.innerHTML=`<svg viewBox="0 0 200 200"><polygon points="${pts.join(' ')}" fill="#ff3d8b" stroke="#fff" stroke-width="5"/><polygon points="${pts.join(' ')}" transform="translate(100 100) scale(.55) translate(-100 -100)" fill="#2fe6d6"/></svg>`;fx.appendChild(bm);
+    for(let k=0;k<14;k++){const a=Math.random()*6.283,d=90+Math.random()*130,s=document.createElement('i');s.className='sh';
+      s.style.left=cx+'px';s.style.top=cy+'px';s.style.background=k%2?C.pink:C.teal;
+      s.style.setProperty('--dx',Math.cos(a)*d+'px');s.style.setProperty('--dy',Math.sin(a)*d+'px');fx.appendChild(s)}
+    const t=document.createElement('span');t.className='bt';t.textContent='BOOM!';t.style.left=cx+'px';t.style.top=cy+'px';fx.appendChild(t);
+    const card=document.querySelector('.card');card.classList.remove('kick');void card.offsetWidth;card.classList.add('kick');
+
+  },280);
+}
+
+const QS=[
+ ["Which two cities are at the heart of Arcane?",["Piltover and Zaun","Noxus and Demacia","Ionia and Shurima","Bilgewater and Ixtal"],0],
+ ["What is Jinx's real name before she becomes Jinx?",["Powder","Mylo","Sevika","Cassandra"],0],
+ ["Who is Jinx's older sister?",["Vi","Caitlyn","Mel","Ambessa"],0],
+ ["What magical tech is created by Jayce and Viktor?",["Hextech","Chemtech","Steamtech","Runetech"],0],
+ ["What purple drug spreads through Zaun?",["Shimmer","Nectar","Elixir","Ember"],0],
+ ["What is the name of Jinx's rocket launcher?",["Fishbones","Pow-Pow","Zapper","Mega Gat"],0],
+ ["Who runs the Last Drop bar in the Undercity?",["Vander","Silco","Jayce","Marcus"],0],
+ ["Which studio animated Arcane?",["Fortiche","Pixar","Ghibli","Trigger"],0],
+ ["Which game is Arcane based on?",["League of Legends","Valorant","Dota 2","Overwatch"],0],
+ ["What is Caitlyn's job in Piltover?",["Enforcer","Baker","Councilor","Smuggler"],0],
+ ["Who is the crime lord of Zaun's undercity?",["Silco","Vander","Heimerdinger","Ekko"],0],
+ ["What color is Jinx's hair?",["Blue","Pink","Black","Silver"],0],
+ ["What weapon is Vi famous for?",["Hextech gauntlets","Twin swords","A bow","A giant hammer"],0],
+ ["Who becomes Jayce's scientist partner?",["Viktor","Singed","Benzo","Deckard"],0],
+ ["Which young Zaunite builds a time-bending device?",["Ekko","Claggor","Finn","Vander"],0],
+ ["Which Councilor belongs to the Medarda family?",["Mel","Grayson","Salo","Hoskel"],0],
+ ["What are Piltover's streets and towers known for?",["Gold and progress","Ice and snow","Desert sand","Floating islands"],0],
+ ["What is the name of Jinx's explosive gun?",["Pow-Pow","Sparky","Boomer","Blinky"],0],
+ ["What is the name of the group Ekko leads?",["The Firelights","The Wolves","The Council","The Hunters"],0]
+];
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const COLS=[C.teal,C.pink,C.gold,C.green];
+const TOTAL=8;
+let deck,i,score,locked,res;
+function art(el){const c=pick(COLS);el.style.setProperty('--glow',c);el.innerHTML=pick(ICONS)(c)}
+function show(id){['start','game','end'].forEach(s=>$(s).classList.toggle('hidden',s!==id))}
+function pips(){$('pips').innerHTML=Array.from({length:TOTAL},(_,k)=>`<span class="pip ${res[k]||(k===i?'cur':'')}"></span>`).join('')}
+function start(){
+  deck=shuffle(QS).slice(0,TOTAL).map(([q,o,a])=>({q,o:shuffle(o.map((t,k)=>({t,ok:k===a})))}));
+  i=0;score=0;res=[];show('game');render();
+}
+function render(){
+  locked=false;const d=deck[i];
+  $('count').textContent=`Question ${i+1} of ${TOTAL}`;
+  $('pts').textContent=`Score ${score}`;pips();
+  $('q').textContent=d.q;art($('art'));
+  $('next').classList.add('hidden');
+  const box=$('opts');box.innerHTML='';
+  d.o.forEach(o=>{
+    const b=document.createElement('button');b.className='opt';b.innerHTML='<span></span>';b.firstChild.textContent=o.t;
+    b.onclick=()=>answer(b,o);box.appendChild(b);
+  });
+}
+function answer(btn,o){
+  if(locked)return;locked=true;
+  if(o.ok){score++;btn.classList.add('ok')}else btn.classList.add('bad');
+  res[i]=o.ok?'ok':'bad';
+  [...$('opts').children].forEach(b=>{b.disabled=true});
+  $('pts').textContent=`Score ${score}`;pips();
+  $('nextTxt').textContent=i===TOTAL-1?'See result':'Next';
+  $('next').classList.remove('hidden');
+}
+function finish(){
+  show('end');art($('endArt'));
+  finale(Math.max(3,Math.min(7,score)));
+  $('final').textContent=`${score} / ${TOTAL}`;
+  const r=score>=TOTAL?["Hextech Master","Perfect run. Heimerdinger would be proud."]
+   :score>=6?["Council Member","You know both cities well."]
+   :score>=4?["Enforcer","Not bad. Patrol the Undercity once more."]
+   :["Zaun Newcomer","Time to rewatch the series."];
+  $('rank').textContent=r[0];$('msg').textContent=r[1];
+}
+$('startBtn').onclick=start;$('again').onclick=start;
+$('next').onclick=()=>{i++;i>=TOTAL?finish():render()};
+art($('startArt'));
+// background: paint drips, graffiti doodles, floating hexcores
+const bg=$('bg');
+[[8,70,C.pink],[19,110,C.teal],[31,55,C.pink],[58,90,C.teal],[72,60,C.pink],[88,120,C.teal]].forEach(([x,h,c])=>{
+  const d=document.createElement('i');d.className='drip';d.style.cssText=`left:${x}%;height:${h}px;background:${c};box-shadow:0 0 10px ${c}`;bg.appendChild(d)});
+[[jinx,'2%','42%',90,-10,C.teal],[bomb,'88%','38%',80,12,C.pink],[heart,'6%','78%',70,-8,C.pink],[bolt,'90%','70%',60,10,C.green],[rocket,'44%','90%',90,-4,C.teal]].forEach(([f,x,y,s,r,c])=>{
+  const d=document.createElement('div');d.className='doodle';d.style.cssText=`left:${x};top:${y};width:${s}px;height:${s}px;transform:rotate(${r}deg);opacity:.55`;d.innerHTML=f(c);bg.appendChild(d)});
+[['12%','24%',64],['80%','22%',54],['70%','58%',70],['20%','60%',50]].forEach(([x,y,s],k)=>{
+  const d=document.createElement('div');d.className='bgex';d.style.cssText=`left:${x};top:${y};width:${s}px;height:${s}px;animation-delay:${-k*1.7}s`;d.innerHTML=hexcore('#1b3fae');bg.appendChild(d)});
+</script>
+</body>
+</html>
